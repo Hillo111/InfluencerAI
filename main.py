@@ -1,9 +1,93 @@
+import time
+from scheduler import Scheduler
+from character import *
+from detector import get_objects
 from instagram import InstaSession
-from character import Character, Conversation
+from time import sleep
+import logging
+from requests.exceptions import ConnectionError
+from config import *
+import os
+import time
 
-c = Conversation(Character.make_from_archetype(Character.Archetype.AVERAGE))
+logging.getLogger().setLevel(logging.INFO)
 
-img_fp = "/Users/Stas/Documents/degeneracy/pic.png"
-c.character.get_picture().save(img_fp)
-session = InstaSession('fysoru@lyft.live', 'theppmaster')
-session.make_post(img_fp)
+account_email = 'reknedilte@gufum.com'
+
+def do_responses(character: Character):
+    session = InstaSession(account_email, 'ploder')
+    session.scrape_posts(character, n=character.post_interaction_count)
+    sleep(1000)
+
+def make_post(character: Character):
+    prompt, neg_prompt = character.get_prompt()
+    logging.info('generating image with prompt: ' + prompt)
+    img = character.get_picture(prompt, neg_prompt)
+    img_fn = time.strftime('%Y-%m-%d %H-%M-%S')
+    with open(f"{IMAGES_FOLDER}{img_fn}.txt", 'w') as f:
+        f.write(prompt + '\n\n' + neg_prompt)
+    img_fp = f"{IMAGES_FOLDER}{img_fn}.png"
+    img.save(img_fp)
+    caption = character.get_caption(prompt)
+    logging.info('wrote caption: ' + caption)
+    
+    session = InstaSession(account_email, 'ploder')
+    session.make_post(img_fp, caption)
+    session.driver.close()
+
+def check_sd_server():
+    try:
+        x = requests.get(SD_URL + '/' + OPTIONS_ENDPOINT)
+    except ConnectionError:
+        raise Exception('SD server unstarted.')
+    else:
+        if x.status_code == 404:
+            raise Exception('SD server returning a 404 response. Make sure you have --api specified in commandline args')
+        logging.info('SD server started.')
+
+def set_options(payload):
+    return requests.post(url=f'{SD_URL}/{OPTIONS_ENDPOINT}', json=payload)
+
+if __name__ == '__main__':
+    character = Character(
+        Character.Anatomy(
+            sex=True,
+            age=25,
+            height=Height.AVERAGE,
+            body=Body.AVERAGE,
+            eye_color='brown',
+            hair_color='grey',
+            skin_color='light',
+            race='white',
+            hair=Hair.SHORT,
+            beard=Hair.NONE
+        ),
+        Location(
+            'Los Angeles',
+            ['beach', 'pier', 'dense city', 'sea']
+        ),
+        {
+            'playing sports': -0.8,
+            'cooking': 0.9
+        },
+        picture_presence=0.5,
+        outside_preference=0.5,
+        login_frequency=0.8,
+        post_interaction_count=1,
+        writing_chance=1.0
+    )
+    check_sd_server()
+    set_options(
+        {
+            "sd_model_checkpoint": 'realisticVisionV20_v20NoVAE.safetensors [c0d1994c73]',
+            'sd_vae': 'None'
+        }
+    )
+    make_post(character)
+    # do_responses(character)
+    # posting_scheduler = Scheduler(lambda : make_post(character), (1 + 5 * (1 - character.login_frequency), 2 + 10 * (1 - character.login_frequency))) # min: 1 to 2 hours, max: 3 to 6 hours
+    # scrolling_scheduler = Scheduler(lambda : do_responses(character), (0.25 + 0.75 * (1 - character.login_frequency), 0.5 + 1.5 * (1 - character.login_frequency))) # min: 15 to 30 minutes, max: 1 to 2 hours
+    # while True:
+    #     posting_scheduler.attempt_run()
+    #     scrolling_scheduler.attempt_run()
+    #     time.sleep(1)
