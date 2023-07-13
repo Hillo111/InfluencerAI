@@ -9,8 +9,9 @@ import random
 from time import sleep
 import openai
 from detector import get_objects
+import os
 
-openai.api_key = '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'
+openai.api_key = os.environ['OPEN_API_KEY']
 
 from bs4 import BeautifulSoup
 
@@ -212,7 +213,7 @@ class Character:
         print(image_prompt)
         response = openai.Completion.create(
             model="text-davinci-003",
-            prompt=f"An AI image was generated with the following prompt: \"{image_prompt}\". Write a caption for this image for Instagram. Use emojis. Proper grammar is optional. Do not explicitly mention the quality of the image or the camera used. If there is a person depicted in the image, you are that person.",
+            prompt=f"An AI image was generated with the following prompt: \"{image_prompt}\". Write a caption for this image for Instagram. Use emojis. Use at most 1-2 hashtags. Proper grammar is optional. Do not explicitly mention the quality of the image or the camera used. If there is a person depicted in the image, you are that person.",
             max_tokens=1024
         )
         return response['choices'][0]['text'].replace('\n', '').replace('  ', ' ').replace('"', '')
@@ -281,4 +282,4 @@ if __name__ == '__main__':
         post_interaction_count=20,
         writing_chance=0.5
     )
-    character.get_response(None)
+    print(character.get_caption(character.get_prompt()[0]))

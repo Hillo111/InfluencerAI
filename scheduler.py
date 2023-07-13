@@ -19,4 +19,10 @@ class Scheduler:
         if time.time() > self.run_time:
             self.task()
             self.schedule()
-
+        
+if __name__ == '__main__':
+    def failure():
+        return 1 / 0
+    s = Scheduler(failure, (1 / 3600, 1/3600))
+    while True:
+        s.attempt_run()

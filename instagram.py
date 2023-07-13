@@ -46,11 +46,16 @@ class InstaSession:
         self.driver = webdriver.Chrome()
         self.driver.get('https://instagram.com/')
         self.driver.implicitly_wait(10)
+        tries = 0
         while True:
             try:
                 self.login()
             except:
-                print('Failed login, trying again')
+                if tries < 5:
+                    tries += 1
+                    print(f'Attempt {tries}/5 Failed login, trying again')
+                else:
+                    raise Exception('Failed login attempt too many times')
             else:
                 break
     
@@ -121,7 +126,10 @@ class InstaSession:
         sleep(1)
         self.driver.find_elements(By.CLASS_NAME, btn_class)[-1].click()
         get_when_exists(self.driver, 'x1lliihq x1plvlek xryxfnj x1n2onr6 x193iq5w xeuugli x1fj9vlw x13faqbe x1vvkbs x1s928wv xhkezso x1gmr53x x1cpjm7i x1fgarty x1943h6x x1i0vuye x1ms8i2q xo1l8bm x5n08af x2b8uid x4zkp8e xw06pyt x10wh9bi x1wdrske x8viiok x18hxmgj'.replace(' ', '.'), 20)
+        print('detected post got sent')
+        sleep(2)
         self.driver.find_element(By.CLASS_NAME, 'x160vmok x10l6tqk x1eu8d0j x1vjfegm'.replace(' ', '.')).find_elements(By.TAG_NAME, 'div')[0].click()
+        print('closed out of thing')
 
     def scrape_posts(self, char: Character = None, n: int = 20, ):
         posts = []
@@ -228,7 +236,8 @@ class InstaSession:
         return posts
 
 if __name__ == "__main__":
-    session = InstaSession('toydapurtu@gufum.com', 'ploder')
-    session.make_post('C:\\Users\\Max\\Documents\\degeneracy\\set0\\0.png', 'i am cooking....')
-    while True:
-        sleep(1)
+    session = InstaSession('reknedilte@gufum.com', 'ploder')
+    sleep(10000)
+    # session.make_post('C:\\Users\\Max\\Documents\\degeneracy\\set0\\0.png', 'i am cooking....')
+    # while True:
+    #     sleep(1)

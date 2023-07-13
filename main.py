@@ -12,26 +12,28 @@ import time
 
 logging.getLogger().setLevel(logging.INFO)
 
-account_email = 'reknedilte@gufum.com'
+account_email = os.environ['ACCOUNT_EMAIL']
+account_password = os.environ['ACCOUNT_PASSWORD']
 
 def do_responses(character: Character):
-    session = InstaSession(account_email, 'ploder')
+    session = InstaSession(account_email, account_password)
     session.scrape_posts(character, n=character.post_interaction_count)
-    sleep(1000)
+    session.driver.close()
 
 def make_post(character: Character):
     prompt, neg_prompt = character.get_prompt()
     logging.info('generating image with prompt: ' + prompt)
     img = character.get_picture(prompt, neg_prompt)
-    img_fn = time.strftime('%Y-%m-%d %H-%M-%S')
-    with open(f"{IMAGES_FOLDER}{img_fn}.txt", 'w') as f:
+    # img = Image.open('c:\\Users\\Max\\Downloads\\images\\2023-07-10 19-27-03.png')
+    img_fn = os.path.join(IMAGES_FOLDER, time.strftime('%Y-%m-%d %H-%M-%S')).replace('/', '\\')
+    with open(f"{img_fn}.txt", 'w') as f:
         f.write(prompt + '\n\n' + neg_prompt)
-    img_fp = f"{IMAGES_FOLDER}{img_fn}.png"
+    img_fp = f"{img_fn}.png"
     img.save(img_fp)
     caption = character.get_caption(prompt)
     logging.info('wrote caption: ' + caption)
     
-    session = InstaSession(account_email, 'ploder')
+    session = InstaSession(account_email, account_password)
     session.make_post(img_fp, caption)
     session.driver.close()
 
@@ -70,11 +72,11 @@ if __name__ == '__main__':
             'playing sports': -0.8,
             'cooking': 0.9
         },
-        picture_presence=0.5,
+        picture_presence=1.0,
         outside_preference=0.5,
-        login_frequency=0.8,
-        post_interaction_count=1,
-        writing_chance=1.0
+        login_frequency=1.0,
+        post_interaction_count=6,
+        writing_chance=0.8
     )
     check_sd_server()
     set_options(
