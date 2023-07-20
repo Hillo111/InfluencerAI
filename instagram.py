@@ -14,7 +14,7 @@ import time
 import random
 from PIL import Image
 from enum import Enum
-from character import Character
+from character import *
 
 def get_when_exists(driver, class_name, timeout=3):
     return WebDriverWait(driver, timeout).until(
@@ -44,16 +44,18 @@ class InstaSession:
         if self.driver:
             self.driver.close()
         self.driver = webdriver.Chrome()
-        self.driver.get('https://instagram.com/')
-        self.driver.implicitly_wait(10)
         tries = 0
         while True:
             try:
+                self.driver.get('https://instagram.com/')
+                self.driver.implicitly_wait(10)
                 self.login()
             except:
                 if tries < 5:
                     tries += 1
                     print(f'Attempt {tries}/5 Failed login, trying again')
+                    self.driver.close()
+                    sleep(1)
                 else:
                     raise Exception('Failed login attempt too many times')
             else:
@@ -133,7 +135,10 @@ class InstaSession:
 
     def scrape_posts(self, char: Character = None, n: int = 20, ):
         posts = []
-        instagram_window = gw.getActiveWindow()
+        instagram_window = gw.getWindowsWithTitle('Instagram')[0]
+        instagram_window.show()
+        pixel_ratio = self.driver.execute_script('return window.devicePixelRatio') # fun fact: a "css pixel" =/= a fucking pixel
+        top_bar_offset = self.driver.execute_script('return (window.outerHeight - window.innerHeight) * window.devicePixelRatio')
         # sleep(100)
         for i in range(n):
             post_elem = self.driver.find_elements(By.TAG_NAME, 'article'.replace(' ', '.'))[min(i, 4)]
@@ -143,15 +148,16 @@ class InstaSession:
             if len(post_elem.find_elements(By.CLASS_NAME, caption_expand_class)) != 0:
                 post_elem.find_element(By.CLASS_NAME, caption_expand_class).click()
             caption_class = '_aacl _aaco _aacu _aacx _aad7 _aade'.replace(' ', '.')
-            if len(post_elem.find_elements(By.CLASS_NAME, caption_class)) != 0:
-                caption = post_elem.find_elements(By.CLASS_NAME, caption_class)[0].text
+            
+            if len(post_elem.find_elements(By.CSS_SELECTOR, 'h1.' + caption_class)) != 0:
+                caption = post_elem.find_elements(By.CSS_SELECTOR, 'h1.' + caption_class)[0].text
             else:
                 caption = ''
             self.driver.implicitly_wait(10)
 
             # self.driver.execute_script('arguments[0].scrollIntoView(true);', post_elem)
             # sleep(1000)
-            content_elem = post_elem.find_element(By.CLASS_NAME, 'x6s0dn4 xyzq4qe x78zum5 xdt5ytf x2lah0s xl56j7k x6ikm8r x10wlt62 x1n2onr6'.replace(' ', '.'))
+            content_elem = post_elem.find_element(By.CLASS_NAME, 'x1ey2m1c x9f619 xds687c x10l6tqk x17qophe x13vifvy x1ypdohk'.replace(' ', '.'))
             # this little dance causes posts to sometimes get skipped... or maybe im grabbing the wrong post element
             self.driver.execute_script('arguments[0].scrollIntoView(true);', content_elem)
             sleep(0.5)
@@ -192,11 +198,13 @@ class InstaSession:
             while not condition():
                 wx, wy = instagram_window.box[0:2]
                 x, y, width, height = self.driver.execute_script('rect = arguments[0].getBoundingClientRect(); return [rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top]', content_elem)
-                width *= 1.743
-                height *= 1.706
+                x = x * pixel_ratio + wx
+                y = y * pixel_ratio + wy + top_bar_offset
+                width *= pixel_ratio
+                height *= pixel_ratio
                 # this shit is ultra jank. TODO: properly get content from instagram
                 with mss.mss() as sct:
-                    sct_img = sct.grab({'left': int(wx + x + 254), 'top': int(wy + y + 228), 'width': int(width), 'height': int(height)})
+                    sct_img = sct.grab({'left': int(x), 'top': int(y), 'width': int(width), 'height': int(height)})
                     images.append(Image.frombytes('RGB', sct_img.size, sct_img.rgb))
                 if post_type == 1 and len(post_elem.find_elements(By.CLASS_NAME, '_9zm2')) != 0:
                     post_elem.find_element(By.CLASS_NAME, '_9zm2').click()
@@ -204,28 +212,31 @@ class InstaSession:
                 sleep(wait_time)
             self.driver.implicitly_wait(10)
             post = Post(images, caption)
+            print(post)
             if char is not None:
                 resp = char.get_response(post)
-                print(post)
+                # sleep(1000)
                 interact_buttons = post_elem.find_elements(By.CLASS_NAME, 'x1i10hfl x6umtig x1b1mbwd xaqea5y xav7gou x9f619 xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x16tdsg8 x1hl2dhg xggy1nq x1a2a7pz x6s0dn4 xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x1ypdohk x78zum5 xl56j7k x1y1aw1k x1sxyh0 xwib8y2 xurb0ha'.replace(' ', '.'))
                 if resp['like']:
-                    interact_buttons[0].click()
+                    interact_buttons[1].click()
                     sleep(1)
                 else:
                     pass
+
                 if 'comment' in resp and len(interact_buttons) > 1: 
-                    interact_buttons[1].click()
+                    interact_buttons[2].click()
                     post_window = self.driver.find_element(By.CLASS_NAME, '_aatb _aate _aatg _aati'.replace(' ', '.'))
                     comment_entry = post_window.find_element(By.TAG_NAME, 'textarea')
-                    x, y, width, height = self.driver.execute_script('rect = arguments[0].getBoundingClientRect(); return [rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top]', comment_entry)
-                    x += width / 2 + 254 + wx
-                    y += height / 2 + 219 + wy + 465
+                    x, y, width, height = self.driver.execute_script('rect = arguments[0].getBoundingClientRect(); return [rect.left, rect.top, rect.width, rect.height]', comment_entry)
+                    width *= pixel_ratio
+                    height *= pixel_ratio
+                    x = x * pixel_ratio + wx + width / 2
+                    y = y * pixel_ratio + wy + height / 2 + top_bar_offset
                     mouse.move(int(x), int(y))
-                    print('moved into position')
-                    sleep(2)
+                    sleep(1)
+                    print('moved to', x, y)
                     mouse.click()
                     keyboard.write(resp['comment'])
-                    # comment_entry.send_keys(resp['comment'])
                     sleep(1)
                     commnet_send = post_window.find_element(By.CLASS_NAME, 'x1i10hfl xjqpnuy xa49m3k xqeqjp1 x2hbi6w xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1q0g3np x1lku1pv x1a2a7pz x6s0dn4 xjyslct x1ejq31n xd10rxx x1sy0etr x17r0tee x9f619 x1ypdohk x1i0vuye x1f6kntn xwhw2v2 xl56j7k x17ydfre x2b8uid xlyipyv x87ps6o x14atkfc x1d5wrs8 xjbqb8w xm3z3ea x1x8b98j x131883w x16mih1h x972fbf xcfux6l x1qhh985 xm0m39n xt0psk2 xt7dq6l xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x1n5bzlp x173jzuc x1yc6y37'.replace(' ', '.'))
                     commnet_send.click()
@@ -236,8 +247,38 @@ class InstaSession:
         return posts
 
 if __name__ == "__main__":
-    session = InstaSession('reknedilte@gufum.com', 'ploder')
-    sleep(10000)
+    session = InstaSession('milmenetra@gufum.com', 'ploder')
+    # sleep(1000)
+    character = Character(
+        Character.Anatomy(
+            sex=False,
+            age=25,
+            height=Height.AVERAGE,
+            body=Body.AVERAGE,
+            eye_color='brown',
+            hair_color='black',
+            skin_color='light',
+            race='chinese',
+            hair=Hair.SHORT,
+            beard=Hair.NONE
+        ),
+        Location(
+            'Los Angeles',
+            ['beach', 'pier', 'dense city', 'sea']
+        ),
+        {
+            'playing sports': -0.8,
+            'cooking': 0.9
+        },
+        picture_presence=0.5,
+        outside_preference=0.5,
+        login_frequency=0.8,
+        post_interaction_count=20,
+        writing_chance=1.0
+    )
+    session.scrape_posts(character, 1)
+    # sleep(10000)
+    session.driver.close()
     # session.make_post('C:\\Users\\Max\\Documents\\degeneracy\\set0\\0.png', 'i am cooking....')
     # while True:
     #     sleep(1)

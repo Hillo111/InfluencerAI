@@ -233,7 +233,8 @@ class Character:
 
         if len(all_objects) > 0:
             prompt += 'An Instagram post has ' + ', '.join(f'{all_objects[k]} {k}(s)' for k in all_objects) + '. '
-        prompt += f'The post has the following caption: "{post.caption}". '
+        if post.caption != '':
+            prompt += f'The post has the following caption: "{post.caption}". '
         print(prompt)
 
         post_responses = {

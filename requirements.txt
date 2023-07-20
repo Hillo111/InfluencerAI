@@ -1,0 +1,11 @@
+beautifulsoup4==4.12.2
+keyboard==0.13.5
+mouse==0.7.1
+mss==9.0.1
+numpy==1.23.5
+openai==0.27.8
+opencv_python==4.8.0.74
+Pillow==10.0.0
+PyGetWindow==0.0.9
+Requests==2.31.0
+selenium==4.10.0
