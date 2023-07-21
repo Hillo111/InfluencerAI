@@ -45,3 +45,4 @@ Now, you should see the scheduler create two events. Upon reaching the time spec
 3. Alternatively, if you want to see the posting or reacting immediatley, you can instead run `test_post.py` or `test_responses.py` instead.
 
 ![post](/demo_images/demo1.png)
+![post](/demo_images/demo2.png)
