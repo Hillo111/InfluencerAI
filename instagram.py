@@ -248,7 +248,7 @@ class InstaSession:
 
 if __name__ == "__main__":
     session = InstaSession('milmenetra@gufum.com', 'ploder')
-    # sleep(1000)
+    sleep(1000)
     character = Character(
         Character.Anatomy(
             sex=False,
@@ -270,7 +270,7 @@ if __name__ == "__main__":
             'playing sports': -0.8,
             'cooking': 0.9
         },
-        picture_presence=0.5,
+        picture_presence=1.0,
         outside_preference=0.5,
         login_frequency=0.8,
         post_interaction_count=20,

@@ -12,8 +12,12 @@ import time
 
 logging.getLogger().setLevel(logging.INFO)
 
-account_email = os.environ['ACCOUNT_EMAIL']
-account_password = os.environ['ACCOUNT_PASSWORD']
+account_email = ACCOUNT_EMAIL
+if ACCOUNT_EMAIL == '<your email>':
+    account_email = os.environ['ACCOUNT_EMAIL']
+account_password = ACCOUNT_PASSWORD
+if ACCOUNT_PASSWORD == '<your password>':
+    account_password = os.environ['ACCOUNT_PASSWORD']
 
 def do_responses(character: Character):
     session = InstaSession(account_email, account_password)
@@ -59,11 +63,11 @@ if __name__ == '__main__':
             'sd_vae': 'vae-ft-mse-840000-ema-pruned.safetensors'
         }
     )
-    # make_post(character)
+    make_post(character)
     # do_responses(character)
-    posting_scheduler = Scheduler(lambda : make_post(character), (1 + 5 * (1 - character.login_frequency), 2 + 10 * (1 - character.login_frequency))) # min: 1 to 2 hours, max: 3 to 6 hours
-    scrolling_scheduler = Scheduler(lambda : do_responses(character), (0.25 + 0.75 * (1 - character.login_frequency), 0.5 + 1.5 * (1 - character.login_frequency))) # min: 15 to 30 minutes, max: 1 to 2 hours
-    while True:
-        posting_scheduler.attempt_run()
-        scrolling_scheduler.attempt_run()
-        time.sleep(1)
+    # posting_scheduler = Scheduler(lambda : make_post(character), (1 + 5 * (1 - character.login_frequency), 2 + 10 * (1 - character.login_frequency))) # min: 1 to 2 hours, max: 3 to 6 hours
+    # scrolling_scheduler = Scheduler(lambda : do_responses(character), (0.25 + 0.75 * (1 - character.login_frequency), 0.5 + 1.5 * (1 - character.login_frequency))) # min: 15 to 30 minutes, max: 1 to 2 hours
+    # while True:
+    #     posting_scheduler.attempt_run()
+    #     scrolling_scheduler.attempt_run()
+    #     time.sleep(1)

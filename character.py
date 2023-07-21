@@ -11,7 +11,10 @@ import openai
 from detector import get_objects
 import os
 
-openai.api_key = os.environ['OPEN_API_KEY']
+OPEN_AI_API_KEY = '<your key>'
+openai.api_key = OPEN_AI_API_KEY
+if OPEN_AI_API_KEY == '<your key>':
+    openai.api_key = os.environ['OPEN_API_KEY']
 
 from bs4 import BeautifulSoup
 
