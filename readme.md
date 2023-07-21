@@ -12,7 +12,7 @@ This instruction set is made for Windows.
 4. Download the associated [VAE](https://civitai.com/api/download/models/29460?type=VAE) and place it in `/models/VAE/`
 5. Download this repo into a folder of your choice with
 
-`git clone https://github.com/Hillo111/degeneracy.git`
+`git clone https://github.com/Hillo111/InfluencerAI.git`
 
 6. Navigate to the repo and download requirements
 ```
