@@ -29,3 +29,6 @@ CHARACTER = Character(
         post_interaction_count=6,
         writing_chance=0.8
     )
+
+ACCOUNT_USERNAME='<your username>'
+ACCOUNT_PASSWORD='<your password>'

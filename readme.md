@@ -1,4 +1,4 @@
-# The Man Inside the Machine (temporary name)
+# InfluencerAI
 
 ## Project description
 
