@@ -139,7 +139,7 @@ class Character:
         picture_presence: str # "shy" vs "confident" vs "casual"
 
     # For str fields, give qualitative descriptions, not quantitative. So instead of "65 inches", say "short". 
-    def __init__(self, anatomy: Anatomy, location: Location, topics: dict[str, float], picture_presence: float, outside_preference: float, login_frequency: float, post_interaction_count: int | tuple[int], writing_chance: float) -> None:
+    def __init__(self, anatomy: Anatomy, location: Location, topics: dict[str, float], writing_style: str, picture_presence: float, outside_preference: float, login_frequency: float, post_interaction_count: int | tuple[int], writing_chance: float) -> None:
         self.anatomy = anatomy
         self.location = location
         self.topics = topics
@@ -148,6 +148,8 @@ class Character:
         for k in self.topics:
             if self.topics[k] > 0:
                 self.positive_topics[k] = self.topics[k]
+
+        self.writing_style = writing_style
 
         self.picture_presence = picture_presence
         self.outside_preference = outside_preference
@@ -216,7 +218,7 @@ class Character:
         print(image_prompt)
         response = openai.Completion.create(
             model="text-davinci-003",
-            prompt=f"An AI image was generated with the following prompt: \"{image_prompt}\". Write a caption for this image for Instagram. Use emojis. Use at most 1-2 hashtags. Proper grammar is optional. Do not explicitly mention the quality of the image or the camera used. If there is a person depicted in the image, you are that person.",
+            prompt=f"An AI image was generated with the following prompt: \"{image_prompt}\". Write a caption for this image for Instagram. Write with a {self.writing_style} writing style. Use emojis. Use at most 1-2 hashtags. Proper grammar is optional. Do not explicitly mention the quality of the image or the camera used. If there is a person depicted in the image, you are that person.",
             max_tokens=1024
         )
         return response['choices'][0]['text'].replace('\n', '').replace('  ', ' ').replace('"', '')
@@ -247,7 +249,7 @@ class Character:
         if ask_gpt(prompt + f'You {"always" if self.writing_chance > 0.9 else "usually" if self.writing_chance > 0.7 else "sometimes" if self.writing_chance > 0.4 else "rarely" if self.writing_chance > 0.1 else "never"} write comments in response to posts. Do you write a comment in response in this case?'):
             response = openai.Completion.create(
                 model="text-davinci-003",
-                prompt=prompt + 'Write a comment in response to this post. ',
+                prompt=prompt + f'Write a comment in response to this post. Write with a {self.writing_style} writing style. ',
                 max_tokens=1024
             )
             post_responses['comment'] = response['choices'][0]['text'].replace('"', '')
